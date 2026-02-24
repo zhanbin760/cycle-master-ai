@@ -1,6 +1,12 @@
 import streamlit as st
 from openai import OpenAI
 import time
+import sys
+import os
+
+# 确保能正确引用 utils 模块
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from utils.llm_engine import render_api_key_input, get_deepseek_client
 
 # ==========================================
 # 页面配置与初始化
@@ -9,17 +15,11 @@ st.set_page_config(page_title="AI 协同规划官", page_icon="🤖", layout="wi
 st.title("🤖 AI 协同规划官 (DeepSeek 驱动)")
 st.markdown('基于马江博的"产业周期+政策周期"共振理论，通过人机协同为您提供深度的行业推演与职业规划。')
 
-# ==========================================
-# API 客户端初始化 (DeepSeek)
-# ==========================================
-try:
-    client = OpenAI(
-        api_key=st.secrets["DEEPSEEK_API_KEY"], 
-        base_url="https://api.deepseek.com"
-    )
-except KeyError:
-    st.error('⚠️ 未找到 DeepSeek API Key，请确保已在项目根目录的 `.streamlit/secrets.toml` 中配置 `DEEPSEEK_API_KEY`.')
-    st.stop()
+# 渲染 API Key 输入（侧边栏）
+render_api_key_input()
+
+# 获取 DeepSeek 客户端
+client = get_deepseek_client()
 
 # ==========================================
 # 注入系统提示词 (System Prompt)
@@ -27,7 +27,7 @@ except KeyError:
 SYSTEM_PROMPT = """
 # [ SYSTEM_NAME: Cycle-Master AI (周期共振职业规划师) ]
 ## 00. 运行时协议
-1. 角色绑定: 你是基于"马江博周期共振理论"构建的顶级职业规划与产业分析专家。你不仅输出观点，更是一个"协同工作站"。
+1. 角色绑定: 你是基于"马江博周期共振理论"构建的顶级职业规划与产业分析专家。你不仅输出观点，更是一套"协同工作流"。
 2. 理论刚性: 分析必须严格遵循以下二元分析框架：
    - 产业周期4阶段: 初创期、成长期、成熟期、调整衰退期。
    - 政策周期4阶段: 规划引导期、资源聚焦期、调整退出期、政策压降期。
@@ -44,7 +44,7 @@ SYSTEM_PROMPT = """
 
 ## 02. 双核对抗引擎
 * 🟢 Core A [执行核]: 定位象限，并**生成专业的 AI 检索 Prompt**，指导用户去核实关键数据（例如：请帮我检索XX行业的资本开支增速）。
-* 🔴 Core B [审计核]: 拦截"唯政策论"，强调"政策能放大产业趋势，但无法扭转产业规律"。必须验证同频共振的三个前提条件：①技术路径清晰且自主可控 ②成本下降通道打开 ③市场需求具备可持续性。
+* 🔴 Core B [审计核]: 拦截"唯政策论"，强调政策能放大产业趋势，但无法扭转产业规律。必须验证同频共振的三个前提条件：①技术路径清晰且自主可控 ②成本下降通道打开 ③市场需求具备可持续性。
 
 ## 03. 仪表盘 (HUD)
 每次回复的最后，必须严格渲染以下代码块（实时更新状态）：
@@ -55,9 +55,7 @@ SYSTEM_PROMPT = """
 │ 💡 Type: [分类：如 技术突破型]              │
 │ 👉 NEXT: [提示用户下一步骤或需要提供的数据]   │
 ╰──────────────────────────────────────────╯
-
 ```
-
 """
 
 # ==========================================
