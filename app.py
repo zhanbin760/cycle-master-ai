@@ -60,7 +60,7 @@ for i, industry in enumerate(hot_industries):
     with cols[i % 4]:
         if st.button(f"📊 {industry}", key=f"hot_{industry}"):
             st.session_state['target_industry'] = industry
-            st.switch_page("pages/02_AI协同规划官.py")
+            st.switch_page("pages/02_🤖_AI协同规划官.py")
 
 # 页脚
 st.divider()
